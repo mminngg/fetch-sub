@@ -24,6 +24,18 @@ check_node_url_str = "https://{}/sub?target={}&url={}&insert=false&config=config
 
 check_url_list = ['api.dler.io','sub.xeton.dev','sub.id9.cc','sub.maoxiongnet.com']
 
+
+def build_proxy_request():
+    proxies = {
+
+    }
+    # 创建 Session
+    session = requests.Session()
+    session.proxies.update(proxies)
+    return session
+
+proxy_request=build_proxy_request()
+
 @logger.catch
 def load_sub_yaml(path_yaml):
     print(os.path.isfile(path_yaml))
@@ -59,7 +71,7 @@ def get_config():
 def get_channel_http(channel_url):
     url_list = []
     try:
-        with requests.post(channel_url) as resp:
+        with proxy_request.post(channel_url) as resp:
             data = resp.text
         all_url_list = re.findall(re_str, data)  # 使用正则表达式查找订阅链接并创建列表
         filter_string_list = ["//t.me/","cdn-telegram.org"]
@@ -107,7 +119,7 @@ def url_check_valid(target,url,bar):
             for check_url in check_url_list:
                 try:
                     check_url_string = check_node_url_str.format(check_url,target,url_encode)
-                    res=requests.get(check_url_string,timeout=15)#设置5秒超时防止卡死
+                    res=proxy_request.get(check_url_string,timeout=15)#设置5秒超时防止卡死
 
                     if res.status_code == 200:
                         airport_list.append(url)
@@ -131,12 +143,13 @@ def sub_check(url,bar):
     with thread_max_num:
         @retry(tries=2)
         def start_check(url):
-            res=requests.get(url,headers=headers,timeout=10)#设置5秒超时防止卡死
+            res=proxy_request.get(url,headers=headers,timeout=10)#设置5秒超时防止卡死
             if res.status_code == 200:
                 global new_sub_list,new_clash_list,new_v2_list,play_list
                 try: #有流量信息
                     info = res.headers['subscription-userinfo']
-                    info_num = re.findall('\d+',info)
+                    reg=r'\d+'
+                    info_num = re.findall(reg,info)
                     if info_num :
                         upload = int(info_num[0])
                         download = int(info_num[1])
@@ -171,6 +184,7 @@ def sub_check(url,bar):
         except:
             pass
         bar.update(1)
+
 
 def get_url_form_channel():
     list_tg = get_config()
