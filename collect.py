@@ -1,3 +1,4 @@
+import base64
 import re
 import traceback
 
@@ -41,11 +42,11 @@ def scrape_node(url):
         return
     except requests.RequestException as e:
         print(f"请求错误: {e}")
-        return []
+        return
     except Exception as e:
         print(f"处理错误: {e}")
         traceback.print_exc()
-        return []
+        return
 
 
 
@@ -60,17 +61,36 @@ def load_config(file_path):
             url='https://t.me/s/'+url.replace('https://t.me/','')
             scrape_node(url)
 
+
+def get_valid_nodes():
+    url = 'https://raw.githubusercontent.com/mminngg/speed-test/refs/heads/master/output/base64.txt'
+    try:
+        response = build_request().get(url)
+        response.raise_for_status()
+        text=response.text
+        text=base64.b64decode(text).decode("utf8").strip()
+        text='\n'.join(line for line in text.splitlines() if line.strip())
+        return text
+    except requests.RequestException as e:
+        print(f"请求错误: {e}")
+        return ''
+
 if __name__ == "__main__":
     load_config('./config.yaml')
     print('-------')
     for url in t:
         print(url)
-    with open('valid_content_all.txt','r+',encoding='utf8') as f:
-        for n in f:
-            node_list.add(n.strip())
-        f.seek(0)
+    with open('valid_content_all.txt','w+',encoding='utf8') as f:
+        # for n in f:
+        #     node_list.add(n.strip())
+        # f.seek(0)
+        text=get_valid_nodes()
+        f.write(text)
+        f.write('\n')
         for node in node_list:
             f.write(node)
             f.write('\n')
+
+
 
 
