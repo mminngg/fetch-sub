@@ -34,7 +34,7 @@ def scrape_node(url):
             node_num+= len(nodes)
             for node in nodes:
                 node_list.add(node[0])
-                print(node[0])
+                # print(node[0])
                 pass
         if node_num==0:
             t.add(url)
